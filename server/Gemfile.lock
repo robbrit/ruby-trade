@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    algorithms (0.6.1)
+    zmq (2.1.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  algorithms
+  zmq
