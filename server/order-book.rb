@@ -16,7 +16,7 @@ class OrderBook
     changed
     notify_observers :new, order
 
-    if order.side == :buy
+    if order.side.to_s == "buy"
       handle_buy_order order
     else
       handle_sell_order order
@@ -27,7 +27,7 @@ class OrderBook
     changed
     notify_observers :cancel, order
 
-    if order.side == :buy
+    if order.side.to_s == "buy"
       @buy_orders.delete order
     else
       @sell_orders.delete order
@@ -37,17 +37,17 @@ class OrderBook
   end
 
   def bid
-    @buy_orders.next.price
+    @buy_orders.empty? ? 0.0 : @buy_orders.next.price
   end
 
   def ask
-    @sell_orders.next.price
+    @sell_orders.empty? ? 0.0 : @sell_orders.next.price
   end
 
 private
 
-  def handle_buy_order
-    while order.price >= (next_order = @sell_orders.next).price
+  def handle_buy_order order
+    while not @sell_orders.empty? and order.price >= (next_order = @sell_orders.next).price
       # buy order is at least equal to the ask, at least one trade will trigger
       if order.size > next_order.size
         # Took out the entire order, keep going
@@ -70,8 +70,8 @@ private
     end
   end
 
-  def handle_sell_order
-    while order.price <= (next_order = @buy_orders.next).price
+  def handle_sell_order order
+    while not @buy_orders.empty? and order.price <= (next_order = @buy_orders.next).price
       if order.size > next_order.size
         # Took out the entire order, keep going
         next_order.fill! next_order.size

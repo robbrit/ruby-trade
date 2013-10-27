@@ -1,0 +1,23 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    algorithms (0.6.1)
+    em-zeromq (0.4.2)
+      eventmachine (>= 1.0.0)
+      ffi (>= 1.0.0)
+      ffi-rzmq (~> 1.0.1)
+    eventmachine (1.0.3)
+    ffi (1.9.0)
+    ffi-rzmq (1.0.3)
+      ffi
+    json (1.8.1)
+    zmq (2.1.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  algorithms
+  em-zeromq
+  json
+  zmq

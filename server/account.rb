@@ -1,8 +1,20 @@
+require 'observer'
+
 class Account
-  attr_reader :stock, :money, :name
+  include Observable
+
+  attr_reader :id, :stock, :money, :name
   
-  def initialize name, stock, money
-    @name, @stock, @money = name, stock, money
+  def initialize id, name, stock, money
+    @id, @name, @stock, @money = id, name, stock, money
+  end
+
+  def update_name name
+    if @name != name
+      @name = name
+      changed
+      notify_observers
+    end
   end
 
   def on_trade order, amount
