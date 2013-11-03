@@ -4,3 +4,6 @@ gem 'zmq'
 gem 'algorithms'
 gem 'json'
 gem 'em-zeromq'
+
+# Testing related
+gem 'rspec'

@@ -3,7 +3,8 @@ require 'observer'
 class Order
   include Observable
 
-  attr_reader :id, :local_id, :side, :price, :size, :owner, :sent_at, :initial_size
+  attr_reader :id, :local_id, :side, :price, :size, :owner, :sent_at,
+    :initial_size, :status
 
   def initialize id, local_id, side, price, size, owner
     @id, @local_id, @side, @price, @size, @owner = id, local_id, side, price, size, owner
@@ -20,7 +21,7 @@ class Order
     end
   end
 
-  def fill! amount
+  def fill! price, amount
     changed
 
     status = :fill
@@ -29,7 +30,7 @@ class Order
     @size -= amount
     @status = status
     
-    notify_observers status, self, amount
+    notify_observers status, self, price, amount
   end
 
   def cancel!

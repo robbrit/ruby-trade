@@ -44,6 +44,21 @@ class OrderBook
     @sell_orders.empty? ? 0.0 : @sell_orders.next.price
   end
 
+  def side_size heap
+    # TODO: This is not accurate since if there are multiple orders at the
+    # same price this will not add them up
+    # However that requires a Heap#each, which does not exist yet
+    heap.next ? heap.next.size : 0
+  end
+
+  def bid_size
+    side_size @buy_orders
+  end
+
+  def ask_size
+    side_size @sell_orders
+  end
+
 private
 
   def handle_buy_order order
@@ -51,17 +66,18 @@ private
       # buy order is at least equal to the ask, at least one trade will trigger
       if order.size > next_order.size
         # Took out the entire order, keep going
-        next_order.fill! next_order.size
-        order.fill! next_order.size
+        next_order.fill! next_order.price, next_order.size
+        order.fill! next_order.price, next_order.size
         @sell_orders.pop
+        @last = next_order.price
       else
         # This one is enough to fill the sent one, no need to add it
-        next_order.fill! order.size
-        order.fill! order.size
+        next_order.fill! next_order.price, order.size
+        order.fill! next_order.price, order.size
+        @sell_orders.pop if next_order.size == order.size
+        @last = next_order.price
         break
       end
-
-      @last = next_order.price
     end
 
     # if we still have size, add it to the book
@@ -74,17 +90,19 @@ private
     while not @buy_orders.empty? and order.price <= (next_order = @buy_orders.next).price
       if order.size > next_order.size
         # Took out the entire order, keep going
-        next_order.fill! next_order.size
-        order.fill! next_order.size
+        next_order.fill! next_order.price, next_order.size
+        order.fill! next_order.price, next_order.size
         @buy_orders.pop
+        @last = next_order.price
       else
         # This one is enough to fill the sent one, no need to add it
-        next_order.fill! order.size
-        order.fill! order.size
+        next_order.fill! next_order.price, order.size
+        order.fill! next_order.price, order.size
+
+        @last = next_order.price
+        @buy_orders.pop if next_order.size == order.size
         break
       end
-
-      @last = next_order.price
     end
 
     # if we still have size, add it to the book
