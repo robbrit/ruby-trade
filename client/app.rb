@@ -5,27 +5,21 @@ class MyApp
 
   def self.on_connect *args
     puts "sending order"
-    buy 100, at: 10.0
+    @buy_order = buy 100, at: 10.0
   end
 
   def self.on_tick *args
-    puts "tick"
-    puts args
-
-    if not @sent
-      @sent = true
-      sell 50, at: 10.0
-    end
+    puts "Cash: #{cash}"
+    puts "Stock: #{stock}"
   end
 
   def self.on_fill *args
-    puts "fill"
-    puts args
+    puts "Got filled"
   end
 
   def self.on_partial_fill *args
-    puts "partial fill"
-    puts args
+    puts "Got partially filled"
+    @buy_order.cancel!
   end
 
 end

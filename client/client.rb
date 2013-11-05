@@ -6,9 +6,6 @@ require_relative "order"
 
 DEFAULT_FEED_PORT = 9000
 DEFAULT_ORDER_PORT = 9001
-DEFAULT_HEARTBEAT = 5
-MAX_HEARTBEAT_FAILS = 5
-HEARTBEAT_FAILTIME = 10
 
 module RubyTrade
   module ConnectionClient
@@ -25,19 +22,24 @@ module RubyTrade
 
       send_data_f data
 
-      puts "connected."
-
       @order_no = 0
       @orders = {}
+      @cash, @stock = 0, 0
+      @connect_triggered = false
 
       @@parent.child = self
-      @@parent.on_connect
     end
+
+    def cash; @cash; end
+    def stock; @stock; end
 
     def send_order side, size, price
       @order_no += 1
 
-      @orders[@order_no] = Order.new @order_no, side, price, size
+      order = Order.new @order_no, side, price, size
+      order.add_observer self
+
+      @orders[@order_no] = order
 
       send_data_f({
         action: "new_order",
@@ -46,48 +48,92 @@ module RubyTrade
         price: price,
         side: side
       }.to_json)
+
+      order
     end
 
+    def update what, *args
+      case what
+      when :cancel
+        order = args[0]
+        send_data_f({
+          action: "cancel_order",
+          id: order.id
+        }.to_json)
+      else
+        # Don't need to handle anything else
+      end
+    end
+
+    # Send a buy order
     def buy amount, args
       send_order "buy", amount, args[:at]
     end
 
+    # Send a sell order
     def sell amount, args
       send_order "sell", amount, args[:at]
     end
 
+    # Send data with tokens
     def send_data_f data
       send_data "\x02#{data}\x03"
     end
 
+    # Strip off begin/end transmission tokens
     def clean data
       if data.length > 2
-        data.split("\x03\x02")[1..-2]
+        data[1..-2].split("\x03\x02")
       else
         []
       end
     end
 
+    # Called by EM when we receive data
     def receive_data data
       clean(data).each do |msg|
         handle_message JSON.parse msg
       end
     end
 
+    # Recalculate cash/stock balances
+    def update_account data
+      order = @orders[data["local_id"]]
+
+      if order.side == "buy"
+        @cash -= data["price"] * data["amount"]
+        @stock += data["amount"]
+      else
+        @cash += data["price"] * data["amount"]
+        @stock -= data["amount"]
+      end
+    end
+
+    # Process a message from the server
     def handle_message data
       case data["action"]
       when "order_accept"
       when "order_fill"
+        update_account data
         @@parent.on_fill @orders[data["local_id"]], data["amount"]
       when "order_partial_fill"
+        update_account data
         @@parent.on_partial_fill @orders[data["local_id"]], data["amount"]
       when "order_cancel"
+        # Don't need to do anything here
+      when "account_update"
+        @cash, @stock = data["cash"], data["stock"]
+
+        if not @connect_triggered
+          @connect_triggered = true
+          @@parent.on_connect
+        end
       end
     end
   end
 
   module Client
-    def self.on_connect *args; puts "blah"; end
+    def self.on_connect *args; end
     def self.on_tick *args; end
     def self.on_fill *args; end
     def self.on_partial_fill *args; end
@@ -108,6 +154,8 @@ module RubyTrade
 
       def buy *args; @@child.buy(*args); end
       def sell *args; @@child.sell(*args); end
+      def cash; @@child.cash; end
+      def stock; @@child.stock; end
 
       def connect_to server, args
         feed_port = args[:feed_port] || DEFAULT_FEED_PORT

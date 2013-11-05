@@ -40,6 +40,8 @@ class Order
   end
 
   def cancel!
+    return if @cancelled  # can only cancel an order once
+
     @cancelled = true
     changed
     notify_observers :cancel, self

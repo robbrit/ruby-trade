@@ -32,6 +32,7 @@ class Exchange
     if not order.valid?
       return order.errors, order
     else
+      @orders[id] = order
       return nil, order
     end
   end
@@ -48,5 +49,10 @@ class Exchange
       ask: @book.ask,
       last: @book.last
     }
+  end
+
+  def cancel_order order_id
+    order = @orders[order_id]
+    @book.cancel_order order if order
   end
 end

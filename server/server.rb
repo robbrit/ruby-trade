@@ -12,20 +12,20 @@ class OrderServer < EM::Connection
   def update action, *args
     case action
     when :fill
-      order, amount = args
+      order, price, amount = args
       send_data_f({
         action: "order_fill",
         amount: amount,
-        price: order.price,
+        price: price,
         local_id: order.local_id
       }.to_json)
       @@parent.tick @@exchange
     when :partial_fill
-      order, amount = args
+      order, price, amount = args
       send_data_f({
         action: "order_partial_fill",
         amount: amount,
-        price: order.price,
+        price: price,
         local_id: order.local_id
       }.to_json)
       @@parent.tick @@exchange
@@ -58,6 +58,11 @@ class OrderServer < EM::Connection
       data["peer_name"] = ip
       puts "User #{data['name']}@#{data["peer_name"]} connected."
       @account = @@exchange.identify data
+      send_data_f({
+        action: "account_update",
+        cash: @account.cash,
+        stock: @account.stock
+      }.to_json)
     when "new_order"
       puts "new order"
 
@@ -83,6 +88,9 @@ class OrderServer < EM::Connection
         @@exchange.send_order order
         @@parent.tick @@exchange
       end
+    when "cancel_order"
+      puts "cancelling #{data["id"]}"
+      @@exchange.cancel_order data["id"]
     end
   end
 
