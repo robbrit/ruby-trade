@@ -115,10 +115,10 @@ module RubyTrade
       when "order_accept"
       when "order_fill"
         update_account data
-        @@parent.on_fill @orders[data["local_id"]], data["amount"]
+        @@parent.on_fill @orders[data["local_id"]], data["amount"], data["price"]
       when "order_partial_fill"
         update_account data
-        @@parent.on_partial_fill @orders[data["local_id"]], data["amount"]
+        @@parent.on_partial_fill @orders[data["local_id"]], data["amount"], data["price"]
       when "order_cancel"
         # Don't need to do anything here
       when "account_update"
