@@ -9,10 +9,22 @@ class OrderServer < EM::Connection
     @@parent = parent
   end
 
+  def post_init
+    @my_orders = {}
+  end
+
+  def unbind
+    # cancel the orders for this client
+    @my_orders.each do |order|
+      @@exchange.cancel_order order
+    end
+  end
+
   def update action, *args
     case action
     when :fill
       order, price, amount = args
+      @my_orders.delete order.id
       send_data_f({
         action: "order_fill",
         amount: amount,
@@ -31,6 +43,7 @@ class OrderServer < EM::Connection
       @@parent.tick @@exchange
     when :cancel
       order = args[0]
+      @my_orders.delete order.id
       send_data_f({
         action: "order_cancel",
         local_id: order.local_id
@@ -85,6 +98,7 @@ class OrderServer < EM::Connection
           id: order.id
         }.to_json)
 
+        @my_orders[order.id] = order
         @@exchange.send_order order
         @@parent.tick @@exchange
       end
