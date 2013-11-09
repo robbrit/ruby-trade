@@ -3,17 +3,16 @@ require 'observer'
 class Order
   include Observable
 
-  attr_reader :id, :local_id, :side, :price, :size, :sent_at, :status
+  attr_reader :id, :local_id, :side, :size, :sent_at, :status
+  attr_accessor :price, :status
 
   def initialize id, side, price, size
     @id, @side, @price, @size = id, side, price, size
     @sent_at = Time.now
     @cancelled = false
     @status = :pending_accept
-  end
 
-  def status= new_status
-    @status = new_status
+    @price = @price.round 2
   end
 
   def <=> order

@@ -2,9 +2,15 @@
 /*global $, SockJS, console, WebSocket*/
 $(function () {
   var plot,
+    NumPeriods = 300,
+    UpdateInterval = 100,
     sock = new WebSocket("ws://" + window.location.host + "/ws"),
     time = 0,
-    ticks = [[], [], []],
+    ticks = {
+      bids: [],
+      asks: [],
+      lasts: []
+    },
     level1 = 0.0;
 
   sock.onopen = function () {
@@ -27,12 +33,26 @@ $(function () {
     console.log("Disconnected from WS server.");
   };
 
-  plot = $.plot("#price-chart", ticks, {
+  function getData() {
+    return [
+      {
+        data: ticks.bids,
+        label: "Bid"
+      },
+      {
+        data: ticks.asks,
+        label: "Ask"
+      },
+      {
+        data: ticks.lasts,
+        label: "Last"
+      }
+    ];
+  }
+
+  plot = $.plot("#price-chart", getData(), {
     series: {
       shadowSize: 0
-    },
-    yaxis: {
-      min: 0
     },
     xaxis: {
       show: false
@@ -42,10 +62,23 @@ $(function () {
   // Push last, update graph
   setInterval(function () {
     time++;
-    ticks[0].push([time, level1.bid]);
-    ticks[1].push([time, level1.ask]);
-    ticks[2].push([time, level1.last]);
-    plot.setData(ticks);
+    ticks.bids.push([time, level1.bid > 0 ? level1.bid : null]);
+    ticks.asks.push([time, level1.ask > 0 ? level1.ask : null]);
+    ticks.lasts.push([time, level1.last > 0 ? level1.last : null]);
+
+    // strip off older ones
+    while (ticks.bids.length > 0 && ticks.bids[0][0] < time - NumPeriods) {
+      ticks.bids.shift();
+    }
+    while (ticks.asks.length > 0 && ticks.asks[0][0] < time - NumPeriods) {
+      ticks.asks.shift();
+    }
+    while (ticks.lasts.length > 0 && ticks.lasts[0][0] < time - NumPeriods) {
+      ticks.lasts.shift();
+    }
+
+    plot.setData(getData());
+    plot.setupGrid();
     plot.draw();
-  }, 1000);
+  }, UpdateInterval);
 });

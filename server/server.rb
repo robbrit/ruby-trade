@@ -16,9 +16,11 @@ class OrderServer < EM::Connection
 
   def unbind
     # cancel the orders for this client
-    @my_orders.each do |order|
+    puts "Connection closed from #{@account.name}, killing orders"
+    @my_orders.values.each do |order|
       @@exchange.cancel_order order
     end
+    @@parent.tick @@exchange
   end
 
   def update action, *args
@@ -96,7 +98,8 @@ class OrderServer < EM::Connection
         send_data_f({
           action: "order_accept",
           local_id: data["local_id"],
-          id: order.id
+          id: order.id,
+          price: order.price
         }.to_json)
 
         @my_orders[order.id] = order
@@ -104,8 +107,14 @@ class OrderServer < EM::Connection
         @@parent.tick @@exchange
       end
     when "cancel_order"
-      puts "cancelling #{data["id"]}"
-      @@exchange.cancel_order data["id"]
+      order = @my_orders[data["id"]]
+      if order
+        puts "cancelling #{data["id"]}"
+        @@exchange.cancel_order order
+        @@parent.tick @@exchange
+      else
+        puts "No order with ID #{data["id"]}"
+      end
     end
   end
 

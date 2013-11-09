@@ -52,8 +52,7 @@ class Exchange
     }
   end
 
-  def cancel_order order_id
-    order = @orders[order_id]
+  def cancel_order order
     @book.cancel_order order if order
   end
 end

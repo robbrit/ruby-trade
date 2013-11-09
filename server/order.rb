@@ -11,6 +11,9 @@ class Order
     @initial_size = @size
     @sent_at = Time.now
     @status = :pending_accept
+
+    # normalize the price to be within cents
+    @price = @price.round 2
   end
 
   def <=> order

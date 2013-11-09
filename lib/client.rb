@@ -116,6 +116,7 @@ module RubyTrade
     def handle_message data
       case data["action"]
       when "order_accept"
+        @orders[data["local_id"]].price = data["price"]
       when "order_fill"
         update_account data
         @@parent.on_fill @orders[data["local_id"]], data["amount"], data["price"]
@@ -136,12 +137,12 @@ module RubyTrade
   end
 
   module Client
-    def self.on_connect *args; end
-    def self.on_tick *args; end
-    def self.on_fill *args; end
-    def self.on_partial_fill *args; end
-
     module ClassMethods
+      def on_connect *args; end
+      def on_tick *args; end
+      def on_fill *args; end
+      def on_partial_fill *args; end
+
       # hook so we can call child methods
       def child= child
         @@child = child
