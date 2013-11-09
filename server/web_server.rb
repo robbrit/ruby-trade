@@ -2,7 +2,6 @@ require "sinatra/base"
 require "sinatra-websocket"
 require "thin"
 require "rack"
-require "rack/sockjs"
 require 'observer'
 require 'json'
 
