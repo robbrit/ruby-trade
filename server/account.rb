@@ -4,9 +4,11 @@ class Account
   include Observable
 
   attr_reader :id, :stock, :cash, :name
+  attr_accessor :ai
   
   def initialize id, name, stock, cash
     @id, @name, @stock, @cash = id, name, stock, cash
+    @ai = false
   end
 
   def update_name name
@@ -29,5 +31,9 @@ class Account
 
   def net_value current_price
     @cash + @stock * current_price
+  end
+
+  def ai?
+    @ai
   end
 end

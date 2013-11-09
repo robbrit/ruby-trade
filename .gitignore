@@ -1,2 +1,6 @@
 # Vim files
 *.swp
+*.swo
+
+# Compiled gem
+*.gem

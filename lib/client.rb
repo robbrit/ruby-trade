@@ -9,15 +9,18 @@ DEFAULT_ORDER_PORT = 9001
 
 module RubyTrade
   module ConnectionClient
-    def self.setup username, parent
-      @@username, @@parent = username, parent
+    def self.setup args, parent
+      @@username = args[:as]
+      @@ai = args[:ai] || false
+      @@parent = parent
     end
 
     def post_init
       # identify with the server
       data = {
         action: "identify",
-        name: @@username
+        name: @@username,
+        ai: @@ai
       }.to_json
 
       send_data_f data
@@ -160,9 +163,8 @@ module RubyTrade
       def connect_to server, args
         feed_port = args[:feed_port] || DEFAULT_FEED_PORT
         order_port = args[:order_port] || DEFAULT_ORDER_PORT
-        user = args[:as]
 
-        if not user
+        if not args[:as]
           raise "Need to specify a username: connect_to \"...\", as: \"username\""
         end
 
@@ -183,7 +185,7 @@ module RubyTrade
             end
           end
 
-          ConnectionClient.setup user, self
+          ConnectionClient.setup args, self
 
           puts "Connecting to order server #{server}:#{order_port}"
           EM.connect server, order_port, ConnectionClient

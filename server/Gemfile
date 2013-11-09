@@ -6,6 +6,7 @@ gem 'json'
 gem 'em-zeromq'
 gem 'thin'
 gem 'sinatra'
+gem 'sinatra-websocket'
 
 # Testing related
 gem 'rspec'

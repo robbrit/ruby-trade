@@ -17,6 +17,7 @@ class Exchange
   def identify data
     account = @accounts[data["peer_name"]] || Account.new(data["peer_name"], data["name"], STARTING_EQUITY, STARTING_CASH)
 
+    account.ai = data["ai"]
     account.update_name data["name"]
 
     @accounts[account.name] = account

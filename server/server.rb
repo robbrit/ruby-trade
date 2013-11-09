@@ -2,6 +2,7 @@ require 'em-zeromq'
 require 'json'
 
 require_relative 'exchange'
+require_relative 'web_server'
 
 class OrderServer < EM::Connection
   def self.setup parent
@@ -122,6 +123,8 @@ class Server
       action: "tick",
       level1: exchange.level1
     }
+    Webapp.level1_update exchange.level1
+
     puts msg.inspect
     puts @feed_socket.send_msg(msg.to_json)
   end
@@ -129,6 +132,7 @@ class Server
   def start args = {}
     order_port = args[:order_port]
     feed_port = args[:feed_port]
+    webserver_port = args[:webserver_port]
 
     @context = EM::ZeroMQ::Context.new 1
 
@@ -141,6 +145,9 @@ class Server
       puts "Hosting feed on #{feed_port}"
       @feed_socket = @context.socket ZMQ::PUB
       @feed_socket.bind "tcp://*:#{feed_port}"
+
+      puts "Loading webserver on #{webserver_port}"
+      run_webserver port: webserver_port
 
       Signal.trap("INT") { EM.stop }
       Signal.trap("TERM") { EM.stop }
