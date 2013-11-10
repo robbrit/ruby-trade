@@ -3,7 +3,7 @@ require 'observer'
 class Order
   include Observable
 
-  attr_reader :id, :local_id, :side, :size, :sent_at, :status
+  attr_reader :id, :side, :size, :sent_at, :status
   attr_accessor :price, :status
 
   def initialize id, side, price, size

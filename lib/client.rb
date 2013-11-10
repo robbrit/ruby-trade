@@ -127,6 +127,9 @@ module RubyTrade
           @connect_triggered = true
           @@parent.on_connect
         end
+      when "dividend"
+        @cash += data["value"]
+        @@parent.on_dividend data["value"]
       end
     end
   end
@@ -137,6 +140,7 @@ module RubyTrade
       def on_tick *args; end
       def on_fill *args; end
       def on_partial_fill *args; end
+      def on_dividend *args; end
 
       # hook so we can call child methods
       def child= child

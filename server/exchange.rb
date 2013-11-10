@@ -3,8 +3,10 @@ require_relative 'order-book'
 require_relative 'order'
 require_relative 'server'
 
-STARTING_EQUITY = 0
-STARTING_CASH = 10_000
+StartingEquity = 0
+StartingCash = 10_000
+DividendAmount = 0.25
+DividendFrequency = 600
 
 class Exchange
   def initialize
@@ -14,8 +16,19 @@ class Exchange
     @book = OrderBook.new
   end
 
+  def accounts
+    @accounts.values
+  end
+
+  # Pay dividends to all accounts
+  def pay_dividends
+    @accounts.values.each do |account|
+      account.process_dividend DividendAmount
+    end
+  end
+
   def identify data
-    account = @accounts[data["peer_name"]] || Account.new(data["peer_name"], data["name"], STARTING_EQUITY, STARTING_CASH)
+    account = @accounts[data["peer_name"]] || Account.new(data["peer_name"], data["name"], StartingEquity, StartingCash)
 
     account.ai = data["ai"]
     account.update_name data["name"]

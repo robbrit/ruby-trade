@@ -8,7 +8,7 @@ require 'json'
 class Level1
   include Observable
 
-  attr_reader :level1
+  attr_reader :level1, :accounts
 
   def initialize
     @level1 = {
@@ -22,6 +22,12 @@ class Level1
     @level1 = level1
     changed
     notify_observers :level1, level1
+  end
+
+  def update_accounts accounts
+    @accounts = accounts
+    changed
+    notify_observers :accounts, accounts
   end
 end
 
@@ -42,6 +48,11 @@ class SocketWrapper
       @socket.send({
         action: action,
         level1: data[0]
+      }.to_json)
+    when :accounts
+      @socket.send({
+        action: action,
+        accounts: data[0]
       }.to_json)
     end
   end
@@ -86,6 +97,10 @@ class Webapp < Sinatra::Base
 
   def self.level1_update level1
     @@level1.update_level1 level1
+  end
+
+  def self.update_accounts accounts
+    @@level1.update_accounts accounts
   end
 end
 

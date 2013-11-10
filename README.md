@@ -141,6 +141,21 @@ Here is an example client:
     # Connect to the server
     MyApp.connect_to "127.0.0.1", as: "Jim"
 
+### Hooks
+
+The following hooks are available:
+
+* `on_connect` - Called when the client connects to the server.
+* `on_tick level` - Called whenever something happens in the exchange. `level1`
+  is a hash containing `"bid"`, `"ask"`, and `"last"`.
+* `on_fill order, amount, price` - Called when `order` is filled. `amount` is
+  the amount (usually the size of the order, but will be less if the order was
+  partially filled before), and `price` is the price that it was filled at.
+* `on_partial_fill order, amount, price` - Same as `on_fill`, but this order is
+  still live in the market.
+* `on_dividend amount` - Called when a dividend is received, `amount` is the
+  cash value of the dividend (which will be negative for short positions).
+
 ## Events
 
 ### Dividend

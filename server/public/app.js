@@ -26,6 +26,13 @@ $(function () {
       $(".ask").html(data.level1.ask.toFixed(2));
       $(".last").html(data.level1.last.toFixed(2));
       break;
+    case "accounts":
+      $("#leaderboard tbody").html(
+        $.map(data.accounts, function (obj) {
+          return "<tr><td>" + obj.join("</td><td>") + "</td></tr>";
+        }).join("")
+      );
+      break;
     }
   };
 

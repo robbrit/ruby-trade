@@ -11,11 +11,20 @@ class Account
     @ai = false
   end
 
+  def process_dividend amount
+    value = stock * amount
+
+    @cash += value
+
+    changed
+    notify_observers :dividend, {amount: amount, value: value}
+  end
+
   def update_name name
     if @name != name
       @name = name
       changed
-      notify_observers
+      notify_observers :name_change, name
     end
   end
 

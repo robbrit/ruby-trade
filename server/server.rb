@@ -5,12 +5,30 @@ require_relative 'exchange'
 require_relative 'web_server'
 require_relative 'common'
 
+AccountUpdateFrequency = 30
+
 class OrderServer < EM::Connection
   include LineCleaner
 
   def self.setup parent
     @@exchange = Exchange.new
     @@parent = parent
+
+    EM.add_periodic_timer DividendFrequency do
+      @@exchange.pay_dividends
+    end
+
+    EM.add_periodic_timer AccountUpdateFrequency do
+      level1 = @@exchange.level1
+      Webapp.update_accounts(@@exchange.accounts.select { |account|
+        #not account.ai?
+        true
+      }.map { |account|
+        [account.name, account.net_value(level1[:last]), account.stock, account.cash]
+      }.sort_by { |row|
+        row[3]
+      })
+    end
   end
 
   def post_init
@@ -56,6 +74,11 @@ class OrderServer < EM::Connection
         local_id: order.local_id
       }.to_json)
       @@parent.tick @@exchange
+    when :dividend
+      send_data_f({
+        action: "dividend",
+        value: args[0][:value]
+      }.to_json)
     end
   end
 
@@ -69,7 +92,11 @@ class OrderServer < EM::Connection
       _, ip = Socket.unpack_sockaddr_in get_peername
       data["peer_name"] = ip
       puts "User #{data['name']}@#{data["peer_name"]} connected."
+
+      @account.delete_observer self if @account
       @account = @@exchange.identify data
+      @account.add_observer self
+
       send_data_f({
         action: "account_update",
         cash: @account.cash,
@@ -96,7 +123,7 @@ class OrderServer < EM::Connection
           price: order.price
         }.to_json)
 
-        @my_orders[order.id] = order
+        @my_orders[order.local_id] = order
         @@exchange.send_order order
         @@parent.tick @@exchange
       end
@@ -136,9 +163,9 @@ class Server
 
     @context = EM::ZeroMQ::Context.new 1
 
-    OrderServer.setup self
-
     EM.run do
+      OrderServer.setup self
+
       puts "Listening for clients on #{order_port}"
       EM.start_server "0.0.0.0", order_port, OrderServer
 
