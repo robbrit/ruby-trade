@@ -28,13 +28,15 @@ class Account
     end
   end
 
-  def on_trade order, amount
-    if order.side == :buy
+  def on_trade order, price, amount
+    if order.side == "buy"
+      puts "#{@name}: got trade: #{amount} @ #{price}"
       @stock += amount
-      @cash -= order.price * amount
+      @cash -= price * amount
     else
+      puts "#{@name}: got trade: #{-amount} @ #{price}"
       @stock -= amount
-      @cash += order.price * amount
+      @cash += price * amount
     end
   end
 

@@ -66,15 +66,18 @@ private
       # buy order is at least equal to the ask, at least one trade will trigger
       if order.size > next_order.size
         # Took out the entire order, keep going
-        next_order.fill! next_order.price, next_order.size
-        order.fill! next_order.price, next_order.size
+        price, size = next_order.price, next_order.size
+        next_order.fill! price, size
+        order.fill! price, size
         @sell_orders.pop
         @last = next_order.price
       else
         # This one is enough to fill the sent one, no need to add it
-        next_order.fill! next_order.price, order.size
-        order.fill! next_order.price, order.size
-        @sell_orders.pop if next_order.size == order.size
+        orig_size = next_order.size
+        price, size = next_order.price, order.size
+        next_order.fill! price, size
+        order.fill! price, size
+        @sell_orders.pop if size == orig_size
         @last = next_order.price
         break
       end
@@ -90,17 +93,20 @@ private
     while not @buy_orders.empty? and order.price <= (next_order = @buy_orders.next).price
       if order.size > next_order.size
         # Took out the entire order, keep going
-        next_order.fill! next_order.price, next_order.size
-        order.fill! next_order.price, next_order.size
+        price, size = next_order.price, next_order.size
+        next_order.fill! price, size
+        order.fill! price, size
         @buy_orders.pop
         @last = next_order.price
       else
         # This one is enough to fill the sent one, no need to add it
-        next_order.fill! next_order.price, order.size
-        order.fill! next_order.price, order.size
+        orig_size = next_order.size
+        price, size = next_order.price, order.size
+        next_order.fill! price, size
+        order.fill! price, size
 
         @last = next_order.price
-        @buy_orders.pop if next_order.size == order.size
+        @buy_orders.pop if orig_size == size
         break
       end
     end

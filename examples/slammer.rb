@@ -19,7 +19,8 @@ class Slammer
   end
 
   def self.setup_next_shot
-    time_gap = MinTime + rand(TimeVariance)
+    #time_gap = MinTime + rand(TimeVariance)
+    time_gap = 10
     puts "Firing in #{time_gap} seconds..."
 
     this = self

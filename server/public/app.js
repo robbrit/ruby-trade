@@ -1,7 +1,7 @@
 /*jslint browser: true, indent: 2, nomen: true, plusplus: true, newcap: true, regexp: true, sloppy: true */
 /*global $, SockJS, console, WebSocket*/
-$(function () {
-  var plot,
+function connect() {
+  var plot, refreshTimer, connectTimer,
     NumPeriods = 300,
     UpdateInterval = 100,
     sock = new WebSocket("ws://" + window.location.host + "/ws"),
@@ -15,6 +15,7 @@ $(function () {
 
   sock.onopen = function () {
     console.log("Connected to WS server.");
+    clearTimeout(connectTimer);
   };
 
   sock.onmessage = function (data) {
@@ -29,6 +30,8 @@ $(function () {
     case "accounts":
       $("#leaderboard tbody").html(
         $.map(data.accounts, function (obj) {
+          obj[1] = obj[1].toFixed(2);
+          obj[3] = obj[3].toFixed(2);
           return "<tr><td>" + obj.join("</td><td>") + "</td></tr>";
         }).join("")
       );
@@ -38,6 +41,9 @@ $(function () {
 
   sock.onclose = function () {
     console.log("Disconnected from WS server.");
+    // reconnect in 10 seconds
+    clearInterval(refreshTimer);
+    connectTimer = setTimeout(connect, 10000);
   };
 
   function getData() {
@@ -67,7 +73,7 @@ $(function () {
   });
 
   // Push last, update graph
-  setInterval(function () {
+  refreshTimer = setInterval(function () {
     time++;
     ticks.bids.push([time, level1.bid > 0 ? level1.bid : null]);
     ticks.asks.push([time, level1.ask > 0 ? level1.ask : null]);
@@ -88,4 +94,8 @@ $(function () {
     plot.setupGrid();
     plot.draw();
   }, UpdateInterval);
+}
+
+$(function () {
+  connect();
 });

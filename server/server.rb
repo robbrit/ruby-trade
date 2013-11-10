@@ -5,7 +5,7 @@ require_relative 'exchange'
 require_relative 'web_server'
 require_relative 'common'
 
-AccountUpdateFrequency = 30
+AccountUpdateFrequency = 5
 
 class OrderServer < EM::Connection
   include LineCleaner
@@ -26,7 +26,7 @@ class OrderServer < EM::Connection
       }.map { |account|
         [account.name, account.net_value(level1[:last]), account.stock, account.cash]
       }.sort_by { |row|
-        row[3]
+        -row[1]
       })
     end
   end
@@ -50,6 +50,7 @@ class OrderServer < EM::Connection
     when :fill
       order, price, amount = args
       @my_orders.delete order.id
+      @account.on_trade order, price, amount
       send_data_f({
         action: "order_fill",
         amount: amount,
@@ -59,6 +60,7 @@ class OrderServer < EM::Connection
       @@parent.tick @@exchange
     when :partial_fill
       order, price, amount = args
+      @account.on_trade order, price, amount
       send_data_f({
         action: "order_partial_fill",
         amount: amount,
