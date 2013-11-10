@@ -3,14 +3,18 @@ require 'json'
 
 require_relative 'exchange'
 require_relative 'web_server'
+require_relative 'common'
 
 class OrderServer < EM::Connection
+  include LineCleaner
+
   def self.setup parent
     @@exchange = Exchange.new
     @@parent = parent
   end
 
   def post_init
+    @buffer = ""
     @my_orders = {}
   end
 
@@ -58,14 +62,6 @@ class OrderServer < EM::Connection
   def send_data_f data
     send_data "\x02#{data}\x03"
   end
-  
-  def clean data
-    if data.length > 2
-      data[1..-2].split("\x03\x02")
-    else
-      []
-    end
-  end
 
   def handle_message data
     case data["action"]
@@ -80,8 +76,6 @@ class OrderServer < EM::Connection
         stock: @account.stock
       }.to_json)
     when "new_order"
-      puts "new order"
-
       error, order = @@exchange.new_order @account, data
 
       if error
@@ -109,7 +103,6 @@ class OrderServer < EM::Connection
     when "cancel_order"
       order = @my_orders[data["id"]]
       if order
-        puts "cancelling #{data["id"]}"
         @@exchange.cancel_order order
         @@parent.tick @@exchange
       else
@@ -127,15 +120,13 @@ end
 
 class Server
   def tick exchange
-    puts "sending tick"
     msg = {
       action: "tick",
       level1: exchange.level1
     }
     Webapp.level1_update exchange.level1
 
-    puts msg.inspect
-    puts @feed_socket.send_msg(msg.to_json)
+    @feed_socket.send_msg(msg.to_json)
   end
 
   def start args = {}

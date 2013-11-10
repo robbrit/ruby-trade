@@ -3,12 +3,15 @@ require 'json'
 require 'em-zeromq'
 
 require_relative "order"
+require_relative "../server/common"
 
 DEFAULT_FEED_PORT = 9000
 DEFAULT_ORDER_PORT = 9001
 
 module RubyTrade
   module ConnectionClient
+    include LineCleaner
+
     def self.setup args, parent
       @@username = args[:as]
       @@ai = args[:ai] || false
@@ -25,6 +28,7 @@ module RubyTrade
 
       send_data_f data
 
+      @buffer = ""
       @order_no = 0
       @orders = {}
       @cash, @stock = 0, 0
@@ -81,15 +85,6 @@ module RubyTrade
     # Send data with tokens
     def send_data_f data
       send_data "\x02#{data}\x03"
-    end
-
-    # Strip off begin/end transmission tokens
-    def clean data
-      if data.length > 2
-        data[1..-2].split("\x03\x02")
-      else
-        []
-      end
     end
 
     # Called by EM when we receive data

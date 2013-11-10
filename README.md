@@ -8,9 +8,76 @@ into the market to buy or sell shares.
 
 ## Installation
 
-Just install the gem (not working just yet)
+Just install the gem:
 
     gem install ruby-trade
+
+Mac users: some people are having some issues installing the ZeroMQ libraries
+on a Mac. If you install an older version of ZeroMQ it should work:
+
+    brew install zeromq22
+    gem install ruby-trade
+
+## Mechanics
+
+The mechanics of the market are for the most part like a real stock market. In
+ruby-trade there is only one stock, and everybody buys and sells that stock from
+other players within the market.
+
+### Orders
+
+The only way to buy or sell shares is through orders. The client script sends
+a orders to the market to buy or sell a number of shares at a specified price.
+When you send an order, the server checks to see if your order can be matched
+with any of the other orders and if it can be, it will execute a trade and your
+script will receive a notification.
+
+The server is real-time, there is no time interval between when things happen.
+If your script sends an order, it is sent to the market immediately.
+
+### Matching Example
+
+Here's an example of how the server will attempt to match a new order into the
+market. Suppose here are the existing orders:
+
+* Trader A has a buy order for 5k shares at $9.00
+* Trader B has a sell order for 10k shares at $10.00
+* Trader C has:
+  * a sell order for 2k shares at $10.00 but it was placed after trader B's order
+  * a sell order for 10k shares at $10.50
+  * a buy order for 10k shares at $8.00.
+
+In this case the "best" buy order is trader A's order at $9 because it has the
+highest price (picture yourself in the position of a seller, would you rather
+sell your shares to someone at $9 or at $8?). This best price is called the "bid".
+The best sell order on the other hand is trader B's sell order at $10, and this
+is called the "ask".
+
+Now Trader D comes along and sends a buy order for 15k shares at $12. Here's how
+the server will match up the orders:
+
+1. Trader D will buy 10k shares from trader B at $10.00 (it starts at the best
+   sell price).
+2. Trader D will then buy 2k shares from trader C at $10.00 (it resolves ties at
+   a certain price level using a first-come-first-serve algorithm).
+3. Trader D will finally buy 3k shares from trader C at $10.50. The first two
+   orders at $10.00 will be gone, and trader C's order at $10.50 will be updated
+   to only have 7k shares left.
+
+When this is over, the "bid" will still be $9.00 from trader A's order, but the
+"ask" will have gone up to $10.50 because all the orders at $10.00 are now gone.
+The "last" price (the price that the last trade was at) would be $10.50.
+
+Next, trader E sends a sell order for 10k shares at $8.50. The matching is like
+this:
+
+1. Trader E will sell 5k shares to trader A at $9.00 (the best buy price).
+2. Since there are no more orders left that are greater than or equal to $8.50,
+   trader E's order will enter the market as a sell order for 5k shares at $8.50.
+
+The "bid" gets updated to be $8.00 (for trader C's buy order) and the "ask" gets
+updated to be $8.50 (trader E's new sell order). The "last" will be $9.00.
+
 
 ## Lingo
 
