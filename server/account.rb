@@ -8,6 +8,8 @@ class Account
   
   def initialize id, name, stock, cash
     @id, @name, @stock, @cash = id, name, stock, cash
+
+    @name = @name.gsub(/[<>]/, "douchebag")
     @ai = false
   end
 

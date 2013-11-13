@@ -63,5 +63,5 @@ class Marketmaker
 
 end
 
-#Marketmaker.connect_to "skynet.robbritton.com", as: "MarketMaker", ai: true
-Marketmaker.connect_to "127.0.0.1", as: "MarketMaker", ai: true
+Marketmaker.connect_to "skynet.robbritton.com", as: "MarketMaker", ai: true
+#Marketmaker.connect_to "127.0.0.1", as: "MarketMaker", ai: true
