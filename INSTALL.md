@@ -1,51 +1,34 @@
-# Installing ruby-trade
+# Installing ruby-trade client gem
 
 See [README](https://github.com/robbrit/ruby-trade/blob/master/README.md) for
 instructions on installing the ruby-trade server and client with Vagrant.
 
 Alternatively, the following are instructions for manual installation.
 
-## Installing ruby 1.9+
+* `ruby --version` must be 1.9.x or higher
+* zeromq must be installed
 
-ruby-trade requires ruby to be at least
+On *ubuntu*:
 
-## Installing zero-mq
+    sudo apt-get install ruby1.9.3
+    sudo apt-get install build-essential libzmq-dev
+    sudo gem install ruby-trade
 
-### Ubuntu
+On *OS X*:
 
-These instructions were adapted from
-[this page](http://ianrumford.github.io/blog/2012/09/12/installing-zeromq-2-dot-2-0-with-the-ruby-gem-on-ubuntu-12-dot-04/).
-
-ruby-trade depends on zeromq libraries being installed on your system. 2.2.x
-works best. The following [installs it from
-source](http://zeromq.org/intro:get-the-software) on Debian/Ubuntu systems:
-    
-    sudo apt-get install -y libtool autoconf automake uuid-dev
-    wget http://download.zeromq.org/zeromq-2.2.0.tar.gz
-    tar xzvf zeromq-2.2.0.tar.gz
-    cd zeromq-2.2.0/
-    ./configure
-    make
-    sudo make install
-    sudo ldconfig
-
-Alternatively the following installs it from an Ubuntu PPA maintained by
-chris-lea:
-
-    apt-get install python-software-properties -y
-    add-apt-repository ppa:chris-lea/zeromq -y
-    add-apt-repository ppa:chris-lea/libpgm -y
-    apt-get update
-    apt-get install -y libzmq-dbg libzmq-dev libzmq1
-
-## OS X
-
-On OSX, you can install it with [homebrew](http://brew.sh/):
+* install [homebrew](http://brew.sh/)
+* to upgrade ruby, see discussion at http://stackoverflow.com/q/8730676/9621
+* Then do the following:
 
     brew install homebrew/versions/zeromq22
+    sudo gem install ruby-trade
 
-## Installing the client locally
+*Running the client*:
 
-Afterward the zeromq libraries are installed, simply do the following:
+At this point you can clone the repo and test the client:
 
-    gem install ruby-trade
+    git clone https://github.com/robbrit/ruby-trade.git
+    cd ruby-trade
+
+    # edit example-client/client.rb to change server IP (defaults to 127.0.0.1)
+    ruby example-client/client.rb

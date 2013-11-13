@@ -20,15 +20,7 @@ Vagrant.configure("2") do |config|
     # ruby-trade depends on 1.9.3
     apt-get install -y ruby1.9.3 vim curl git build-essential
 
-    # installs zeromq 2.2.0 from ppa:chris-lea
-    function install_zeromq {
-      apt-get install python-software-properties -y
-      add-apt-repository ppa:chris-lea/zeromq -y
-      add-apt-repository ppa:chris-lea/libpgm -y
-      apt-get update
-      apt-get install libzmq-dbg libzmq-dev libzmq1 -y
-    }
-    dpkg -s libzmq1 || install_zeromq
+    apt-get install libzmq-dev -y
 
     # install server gems
     gem install bundler
