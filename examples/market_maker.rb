@@ -52,7 +52,9 @@ class Marketmaker
     end
 
     if should_send_sell
-      @sell_order = sell TradeAmount, at: sell_price
+      EM.add_timer 0.6 do
+        @sell_order = sell TradeAmount, at: sell_price
+      end
     else
       puts "Disabling sell"
       @sell_order = nil
@@ -61,4 +63,5 @@ class Marketmaker
 
 end
 
+#Marketmaker.connect_to "skynet.robbritton.com", as: "MarketMaker", ai: true
 Marketmaker.connect_to "127.0.0.1", as: "MarketMaker", ai: true

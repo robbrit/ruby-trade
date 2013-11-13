@@ -34,6 +34,7 @@ class OrderServer < EM::Connection
   def post_init
     @buffer = ""
     @my_orders = {}
+    @last_order = Time.now
   end
 
   def unbind
@@ -105,6 +106,22 @@ class OrderServer < EM::Connection
         stock: @account.stock
       }.to_json)
     when "new_order"
+      # check time
+      now = Time.now
+
+      diff = now - @last_order
+
+      if diff < 0.5
+        send_data_f({
+          action: "order_reject",
+          local_id: data["local_id"],
+          reason: "rate limited"
+        }.to_json)
+        return
+      end
+
+      @last_order = now
+
       error, order = @@exchange.new_order @account, data
 
       if error
@@ -169,7 +186,7 @@ class Server
       OrderServer.setup self
 
       puts "Listening for clients on #{order_port}"
-      EM.start_server "0.0.0.0", order_port, OrderServer
+      EM.start_server "127.0.0.1", order_port, OrderServer
 
       puts "Hosting feed on #{feed_port}"
       @feed_socket = @context.socket ZMQ::PUB

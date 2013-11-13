@@ -56,4 +56,4 @@ class Slammer
   end
 end
 
-Slammer.connect_to "127.0.0.1", as: "Slammer", ai: true
+Slammer.connect_to "skynet.robbritton.com", as: "Slammer", ai: true
