@@ -1,6 +1,6 @@
 # Ruby-Trade
 
-Ruby-Trade is a game where each player builds an AI to compete against other AIs 
+Ruby-Trade is a game where each player builds an AI to compete against other AIs
 in a virtual stock exchange.
 
 The way it works is just like a real stock exchange: you place orders to trade
@@ -8,15 +8,112 @@ into the market to buy or sell shares.
 
 ## Installation
 
-Just install the gem:
+A Vagrantfile is provided with this project that spins up a precise64 box and
+installs the required dependencies to run both the ruby-trade client and
+server. To use it, install
+[Virtualbox](https://www.virtualbox.org/wiki/Downloads) and
+[Vagrant](http://downloads.vagrantup.com/) and then:
 
-    gem install ruby-trade
+```bash
+git clone https://github.com/robbrit/ruby-trade.git
+cd ruby-trade
+vagrant up   # takes a few minutes
+```
 
-Mac users: some people are having some issues installing the ZeroMQ libraries
-on a Mac. If you install an older version of ZeroMQ it should work:
+Now you have a Vagrant VM running with all the software installed.
 
-    brew install zeromq22
-    gem install ruby-trade
+To start the ruby-trade server, open a new terminal tab and do the following:
+
+```bash
+cd ruby-trade
+vagrant ssh
+
+cd /vagrant/server
+ruby app.rb
+```
+
+At this point the server is running, and listening on ports 8080 (web
+dashboard), 9000 (feed), and 9001 (orders). To view the dashboard, visit
+[http://localhost:8080](http://localhost:8080)
+
+To start the included example-client/client.rb, open a new terminal tab and do:
+
+```bash
+cd ruby-trade
+vagrant ssh
+
+cd /vagrant/example-client
+ruby client.rb
+```
+
+Once this is done, your dashboard should show "Jim" as connected.  Feel free to
+start hacking away at `example-client/client.rb`, perhaps running multiple
+instances of it.
+
+For examples of several (naive) strategies, see the [./examples
+directory](https://github.com/robbrit/ruby-trade/tree/master/examples).
+
+If you prefer to install the software directly (without using Vagrant), see
+[INSTALL.md](https://github.com/robbrit/ruby-trade/blob/master/INSTALL.md).
+
+## Example Client
+
+Here is the source code for the
+[example-client/client.rb](https://github.com/robbrit/ruby-trade/blob/master/example-client/client.rb):
+
+```ruby
+require 'ruby-trade'
+
+class MyApp
+  include RubyTrade::Client
+
+  # Called by the system when we connect to the exchange server
+  def self.on_connect
+    puts "sending order"
+    @buy_order = buy 100, at: 10.0
+  end
+
+  # Called whenever something happens on the exchange
+  def self.on_tick level1
+    puts "Cash: #{cash}"
+    puts "Stock: #{stock}"
+    puts "Bid: #{level1["bid"]}"
+    puts "Ask: #{level1["ask"]}"
+    puts "Last: #{level1["last"]}"
+  end
+
+  # Called when an order gets filled
+  def self.on_fill order, amount, price
+    puts "Order ID #{order.id} was filled for #{amount} shares at $%.2f" % price
+  end
+
+  # Called when an order gets partially filled
+  def self.on_partial_fill order, amount, price
+    puts "Order ID #{order.id} was partially filled for #{amount} shares at $%.2f" % price
+
+    # Cancel the order
+    @buy_order.cancel!
+  end
+
+end
+
+# Connect to the server
+MyApp.connect_to "127.0.0.1", as: "Jim"
+```
+
+It uses the following hooks defined in
+[RubyTrade::Client](https://github.com/robbrit/ruby-trade/blob/master/lib/client.rb):
+
+* `on_connect` - Called when the client connects to the server.
+* `on_tick level` - Called whenever something happens in the exchange. `level1`
+  is a hash containing `"bid"`, `"ask"`, and `"last"`.
+* `on_fill order, amount, price` - Called when `order` is filled. `amount` is
+  the amount (usually the size of the order, but will be less if the order was
+  partially filled before), and `price` is the price that it was filled at.
+* `on_partial_fill order, amount, price` - Same as `on_fill`, but this order is
+  still live in the market.
+* `on_dividend amount` - Called when a dividend is received, `amount` is the
+  cash value of the dividend (which will be negative for short positions).
 
 ## Mechanics
 
@@ -98,63 +195,6 @@ Before getting started, there are a few definitions that you should know about:
 * "Level 1" - The bid, the ask, and the last.
 * "Outside the market" - Any buy order with a price less than the bid or any sell
   order with a price higher than the ask is considered "outside the market."
-
-## Client
-
-Here is an example client:
-
-    require 'ruby-trade'
-
-    class MyApp
-      include RubyTrade::Client
-
-      # Called by the system when we connect to the exchange server
-      def self.on_connect
-        puts "sending order"
-        @buy_order = buy 100, at: 10.0
-      end
-
-      # Called whenever something happens on the exchange
-      def self.on_tick level1
-        puts "Cash: #{cash}"
-        puts "Stock: #{stock}"
-        puts "Bid: #{level1["bid"]}"
-        puts "Ask: #{level1["ask"]}"
-        puts "Last: #{level1["last"]}"
-      end
-
-      # Called when an order gets filled
-      def self.on_fill order, amount, price
-        puts "Order ID #{order.id} was filled for #{amount} shares at $%.2f" % price
-      end
-
-      # Called when an order gets partially filled
-      def self.on_partial_fill order, amount, price
-        puts "Order ID #{order.id} was partially filled for #{amount} shares at $%.2f" % price
-
-        # Cancel the order
-        @buy_order.cancel!
-      end
-
-    end
-
-    # Connect to the server
-    MyApp.connect_to "127.0.0.1", as: "Jim"
-
-### Hooks
-
-The following hooks are available:
-
-* `on_connect` - Called when the client connects to the server.
-* `on_tick level` - Called whenever something happens in the exchange. `level1`
-  is a hash containing `"bid"`, `"ask"`, and `"last"`.
-* `on_fill order, amount, price` - Called when `order` is filled. `amount` is
-  the amount (usually the size of the order, but will be less if the order was
-  partially filled before), and `price` is the price that it was filled at.
-* `on_partial_fill order, amount, price` - Same as `on_fill`, but this order is
-  still live in the market.
-* `on_dividend amount` - Called when a dividend is received, `amount` is the
-  cash value of the dividend (which will be negative for short positions).
 
 ## Events
 
